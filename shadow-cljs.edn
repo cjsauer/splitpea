@@ -1,18 +1,4 @@
-{:source-paths
- ["src/dev"
-  "src/main"
-  "src/test"]
-
- :dependencies
- [[rum "0.11.3"]
-  [datascript "0.18.4"]
-  [cljs-http "0.1.46"]
-  [org.clojure/core.async "0.4.500"]
-
-  ;; server
-  [org.clojure/clojure "1.10.1"]
-  [com.wsscode/pathom "2.2.20"]
-  [compojure "1.6.1"]]
+{:deps {:aliases [:cljs]}
 
  :dev-http {8000 {:root    "public"
                   ;; :handler laef.server/handler
