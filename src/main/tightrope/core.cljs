@@ -62,7 +62,7 @@
        :as   opts}]]
   {:static-properties {:contextType TightropeContext}
    ;; -------------------------------------------------------------------------------
-   :did-mount         (fn [{:rum/keys [react-component] :as state}]
+   :did-mount         (fn did-mount [{:rum/keys [react-component] :as state}]
                         (let [{:keys [conn
                                       registry
                                       lookup]} (parse-state state opts)
@@ -74,7 +74,7 @@
                                 (assoc state :rerender-fn rerender-fn))
                             state)))
    ;; -------------------------------------------------------------------------------
-   :will-unmount      (fn [state]
+   :did-unmount      (fn did-unmount [state]
                         (let [{:keys [conn
                                       registry
                                       lookup]} (parse-state state opts )
@@ -87,7 +87,7 @@
                               (dissoc state :rerender-fn))
                             state)))
    ;; -------------------------------------------------------------------------------
-   :before-render     (fn [state]
+   :before-render     (fn before-render [state]
                         (let [{:keys [conn
                                       lookup
                                       props]} (parse-state state opts)
@@ -110,8 +110,10 @@
 (defn on-tx
   [registry {:keys [db-after tx-data]}]
   (let [affected-eids    (map :e tx-data)
-        affected-lookups (eids->lookups db-after affected-eids)
-        rerender-fns     (mapcat #(get @registry %) affected-lookups)]
+        affected-lookups (concat (eids->lookups db-after affected-eids)
+                                 affected-eids)
+        rerender-fns     (mapcat #(get @registry %)
+                                 (set affected-lookups))]
     (doseq [rrf rerender-fns]
       (rrf))))
 
@@ -128,3 +130,18 @@
   (let [provider      (.-Provider TightropeContext)
         props         (clj->js {:value ctx})]
     (apply react/createElement provider props children)))
+
+(defn reset-registry!
+  [ctx]
+  (reset! (:registry ctx) {}))
+
+(defn upsert
+  [lookup m]
+  (let [lookup-map (if (vector? lookup)
+                     (apply hash-map lookup)
+                     {:db/id lookup})]
+    (merge lookup-map m)))
+
+(defn upsert!
+  [conn lookup m]
+  (ds/transact! conn [(upsert lookup m)]))
