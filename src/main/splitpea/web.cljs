@@ -1,29 +1,34 @@
 (ns splitpea.web
   "Entry point of the splitpea web application"
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require ["react" :as r]
-            [rum.core :as rum]
+  (:require [rum.core :as rum]
             [datascript.core :as ds]
-            [cljs.core.async :as a :refer [<!]]
-            [cljs-http.client :as http]
             [tightrope.client :as rope]
-            [splitpea.model :as model]))
+            [splitpea.model :as model]
+            [splitpea.root :as root]
+            [splitpea.resolvers :as shared-resolvers]
+            [splitpea.client.resolvers :as client-resolvers]))
+
+(defn- authz-middleware
+  [{:keys [parser]} req]
+  (if-let [token (-> (parser {} [:user/token]) :user/token)]
+    (update req :headers merge {"Authorization" token})
+    req))
 
 (defonce app-ctx (rope/make-framework-context
-                  {:schema model/schema}))
-
-(rum/defc root
-  []
-  [:h1 "YEP"])
+                  {:schema      model/schema
+                   :parser-opts {:resolvers (concat shared-resolvers/all
+                                                    client-resolvers/all)}
+                   :remote      {:uri "/api"
+                                 :request-middleware authz-middleware}
+                   }))
 
 (defn ^:dev/after-load mount
   []
   (rum/mount
-   (rope/ctx-provider app-ctx (root))
+   (rope/ctx-provider app-ctx (root/root))
    (.getElementById js/document "app")))
 
 (defn start!
   []
-  ;; (ds/transact! (:conn app-ctx) root-init-tx)
   (mount))
-
