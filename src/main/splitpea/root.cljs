@@ -3,11 +3,24 @@
             [tightrope.client :as rope]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Section link
+
+(def *section-link
+  {:idents #{:section/uuid}
+   :query  [:section/uuid :section/name]})
+
+(rum/defc section-link
+  < (rope/ds-mixin *section-link)
+    {:key-fn :section/uuid}
+  [{section ::rope/data}]
+  [:p (:section/name section)])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Org Dashboard
 
 (def *org-dashboard
-  {:lookup   [:org/ident "carrot"]
-   :query    [:org/ident :org/name :org/authors :ui/freshening?]
+  {:lookup   [:org/slug "carrot"]
+   :query    [:org/name {:org/sections (:query *section-link)} :ui/freshening?]
    :freshen? true
    })
 
@@ -18,7 +31,8 @@
     [:p "Org loading..."]
     [:div
      [:pre (str "ORG_DASH" org)]
-     #_(friendly-greeting {:greeting (:org/greeting org)})]))
+     (for [sect (:org/sections org)]
+       (section-link sect))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Dashboard

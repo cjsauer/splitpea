@@ -10,4 +10,5 @@
            :asset-path       "/js"
            :modules          {:main {:init-fn splitpea.web/start!}}
            :compiler-options {:infer-externs :auto
-                              :externs       ["datascript/externs.js"]}}}}
+                              :externs       ["datascript/externs.js"
+                                              "datahike/externs.js"]}}}}

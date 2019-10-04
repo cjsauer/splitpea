@@ -21,7 +21,7 @@
   (require '[clojure.java.io :as io])
 
   (let [parser (#'tightrope.server/default-parser {:resolvers all-resolvers})]
-    (a/<!! (parser {} [{[:org/slug "carrot"] [:org/sections]}])))
+    (a/<!! (parser {} [{[:org/slug "carrot"] [{:org/sections [:section/name]}]}])))
 
   (handler
    {:request-method :post
