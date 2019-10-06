@@ -1,4 +1,4 @@
-(ns splitpea.root
+(ns splitpea.web.root
   (:require [rum.core :as rum]
             [tightrope.client :as rope]))
 
