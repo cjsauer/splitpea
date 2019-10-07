@@ -1,5 +1,6 @@
 (ns splitpea.model
-  (:require [clojure.set :as cset]))
+  (:require [clojure.set :as cset]
+            [clojure.spec.alpha :as s]))
 
 (def schema {:user/me      {:db/valueType :db.type/ref}
              :user/handle  {:db/unique :db.unique/identity}
@@ -16,7 +17,7 @@
 
 (def user-attrs
   #{{:db/ident        :user/validate
-     :db.entity/attrs [:user/email :user/display-name]}
+     :db.entity/attrs [:user/email]}
 
     {:db/ident       :user/email
      :db/unique      :db.unique/identity
@@ -79,6 +80,11 @@
      :db/cardinality :db.cardinality/one
      :db/doc         "Uniquely identifying [instant user-eid] of an idea. Coordinate in thought-space."}
 
+    {:db/ident       :idea/subject
+     :db/valueType   :db.type/ref
+     :db/cardinality :db.cardinality/one
+     :db/doc         "Entity being discussed or described by a particular idea. Most commonly another idea."}
+
     })
 
 (def essential-state
@@ -108,3 +114,45 @@
 
 (def datascript-schema
   (datomic->datascript datomic-schema))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Base specs
+
+(s/def :splitpea/entity (s/or :user :splitpea/user
+                              :org  :splitpea/org
+                              :idea :splitpea/idea))
+
+(s/def :string/not-empty (s/and string? not-empty))
+
+(s/def :user/email :string/not-empty)
+(s/def :user/display-name :string/not-empty)
+(s/def :splitpea/user (s/keys :req [:user/email]
+                              :opt [:user/display-name]))
+
+(s/def :org/slug :string/not-empty)
+(s/def :org/display-name :string/not-empty)
+(s/def :org/users (s/coll-of :splitpea/user))
+(s/def :splitpea/org (s/keys :req [:org/slug
+                                   :org/display-name]
+                             :opt [:org/users]))
+
+(s/def :idea/instant inst?)
+(s/def :idea/author :splitpea/user)
+(s/def :idea/content :string/not-empty)
+(s/def :idea/subject :splitpea/entity)
+(s/def :splitpea/idea (s/keys :req [:idea/instant
+                                    :idea/author
+                                    :idea/content]
+                              :opt [:idea/subject]))
+
+(comment
+
+  (require '[clojure.test.check.generators :as gen])
+
+  (gen/sample (s/gen :splitpea/user))
+
+  (gen/sample (s/gen :splitpea/org))
+
+  (gen/sample (s/gen :splitpea/idea))
+
+  )

@@ -6,7 +6,7 @@
             [tightrope.client :as rope]
             [splitpea.model :as model]
             [splitpea.web.root :as root]
-            [splitpea.resolvers :as shared-resolvers]
+            [splitpea.web.resolvers :as shared-resolvers]
             [splitpea.web.resolvers :as web-resolvers]))
 
 (defn- authz-middleware
