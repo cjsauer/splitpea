@@ -52,10 +52,16 @@
 
 (comment
 
-  (let [my-user {:user/emails "calvin"}]
+  (let [my-user {;; :db/ensure :team/validate
+                 :user/email "calvin"
+                 ;; :team/slug "test"
+                 ;; :team/members [[:user/emails "calvin"] [:user/emails "brittany"]]
+                 }]
     (d/transact (get-conn) {:tx-data [my-user]}))
 
-  (d/pull (d/db (get-conn)) '[*] [:user/emails "calvin"])
+  (d/pull (d/db (get-conn)) '[*] [:user/email "calvin"])
+
+  (d/pull (d/db (get-conn)) '[{:team/members [:user/emails]}] [:team/slug "test"])
 
   (get-conn)
 

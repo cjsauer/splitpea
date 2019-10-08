@@ -17,32 +17,50 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Base specs
 
+;; entities
+
 (s/def :splitpea/entity (s/or :user  :splitpea/user
                               :team  :splitpea/team
                               :idea  :splitpea/idea
                               :media :splitpea/media))
 
-(s/def :splitpea/user   (s/keys :req [:user/emails]))
-(s/def :splitpea/team   (s/keys :req [:team/slug
-                                      :team/members]))
-(s/def :splitpea/idea   (s/keys :req [:idea/instant
-                                      :idea/author
-                                      :idea/content]
-                                :opt [:idea/subject]))
-(s/def :splitpea/media  (s/keys :req [:media/url]))
+(s/def :splitpea/user  (s/keys :req [:user/email]))
+(s/def :splitpea/team  (s/keys :req [:team/slug
+                                     :team/members]))
+(s/def :splitpea/idea  (s/keys :req [:idea/instant
+                                     :idea/author
+                                     :idea/content]
+                               :opt [:idea/subject]))
+(s/def :splitpea/media (s/keys :req [:media/url]))
+
+;; general
 
 (s/def :string/not-empty (s/and string? not-empty))
-(s/def :user/emails      (s/coll-of :string/not-empty))
-(s/def :team/slug        :string/not-empty)
-(s/def :team/member      (s/or :user :splitpea/user
-                               :team :splitpea/team))
-(s/def :team/members     (s/coll-of :team/member :min-count 1 :distinct true))
-(s/def :idea/instant     inst?)
-(s/def :idea/author      :splitpea/user)
-(s/def :idea/content     :string/not-empty)
-(s/def :idea/subject     (s/or :idea  :splitpea/idea
-                               :media :splitpea/media))
-(s/def :media/url        :string/not-empty)
+(s/def :email/address    :string/not-empty)
+
+;; user
+
+(s/def :user/email (s/or :email  :email/address
+                         :emails (s/coll-of :email/address)))
+
+;; team
+
+(s/def :team/slug   :string/not-empty)
+(s/def :team/member (s/or :user :splitpea/user
+                          :team :splitpea/team))
+(s/def :team/members (s/coll-of :team/member :min-count 1 :distinct true))
+
+;; idea
+
+(s/def :idea/instant inst?)
+(s/def :idea/author  :splitpea/user)
+(s/def :idea/content :string/not-empty)
+(s/def :idea/subject (s/or :idea  :splitpea/idea
+                           :media :splitpea/media))
+
+;; media
+
+(s/def :media/url :string/not-empty)
 
 (comment
 
@@ -50,7 +68,7 @@
 
   (gen/sample (s/gen :splitpea/entity) 10)
 
-  (valid-user? {:user/emails ["d"]})
+  (valid-user? {:user/email "d"})
 
   )
 
@@ -75,30 +93,24 @@
 
 ;; :db.entity/preds ------------------------------
 
-(defn valid-db-user?
-  [db eid]
-  (valid-user? (d/pull db '[*] eid)))
+(defn db-entity-validator
+  [pred]
+  (fn [db eid]
+    (pred (d/pull db '[*] eid))))
 
-(defn valid-db-team?
-  [db eid]
-  (valid-team? (d/pull db '[*] eid)))
-
-(defn valid-db-idea?
-  [db eid]
-  (valid-idea? (d/pull db '[*] eid)))
-
-(defn valid-db-media?
-  [db eid]
-  (valid-media? (d/pull db '[*] eid)))
+(def db-valid-user?  (db-entity-validator valid-user?))
+(def db-valid-team?  (db-entity-validator valid-team?))
+(def db-valid-idea?  (db-entity-validator valid-idea?))
+(def db-valid-media? (db-entity-validator valid-media?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Essential state
 
 (def user-attrs
   [{:db/ident        :user/validate
-    :db.entity/preds `valid-db-user?}
+    :db.entity/preds `db-valid--user?}
 
-   {:db/ident       :user/emails
+   {:db/ident       :user/email
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many
@@ -107,7 +119,7 @@
 
 (def team-attrs
   [{:db/ident        :team/validate
-    :db.entity/preds `valid-db-team?}
+    :db.entity/preds `db-valid-team?}
 
    {:db/ident       :team/slug
     :db/unique      :db.unique/identity
@@ -123,7 +135,7 @@
 
 (def idea-attrs
   [{:db/ident        :idea/validate
-    :db.entity/preds `valid-db-idea?}
+    :db.entity/preds `db-valid--idea?}
 
    {:db/ident       :idea/author
     :db/valueType   :db.type/ref
@@ -155,7 +167,7 @@
 
 (def media-attrs
   [{:db/ident        :media/validate
-    :db.entity/preds `valid-db-media?}
+    :db.entity/preds `db-valid--media?}
 
    {:db/ident       :media/url
     :db/unique      :db.unique/identity
