@@ -40,15 +40,14 @@
 
 ;; user
 
-(s/def :user/email (s/or :email  :email/address
-                         :emails (s/coll-of :email/address)))
+(s/def :user/email (s/coll-of :email/address :min-count 1))
 
 ;; team
 
 (s/def :team/slug   :string/not-empty)
 (s/def :team/member (s/or :user :splitpea/user
                           :team :splitpea/team))
-(s/def :team/members (s/coll-of :team/member :min-count 1 :distinct true))
+(s/def :team/members (s/coll-of :team/member :min-count 1))
 
 ;; idea
 
