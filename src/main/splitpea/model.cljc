@@ -1,6 +1,8 @@
 (ns splitpea.model
   (:require [clojure.set :as cset]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            #?(:clj  [datomic.client.api :as d])
+            #?(:cljs [datascript.core :as d])))
 
 (def schema {:user/me      {:db/valueType :db.type/ref}
              :user/handle  {:db/unique :db.unique/identity}
@@ -13,88 +15,185 @@
              })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Base specs
+
+(s/def :splitpea/entity (s/or :user  :splitpea/user
+                              :team  :splitpea/team
+                              :idea  :splitpea/idea
+                              :media :splitpea/media))
+
+(s/def :splitpea/user   (s/keys :req [:user/emails]))
+(s/def :splitpea/team   (s/keys :req [:team/slug
+                                      :team/members]))
+(s/def :splitpea/idea   (s/keys :req [:idea/instant
+                                      :idea/author
+                                      :idea/content]
+                                :opt [:idea/subject]))
+(s/def :splitpea/media  (s/keys :req [:media/url]))
+
+(s/def :string/not-empty (s/and string? not-empty))
+(s/def :user/emails      (s/coll-of :string/not-empty))
+(s/def :team/slug        :string/not-empty)
+(s/def :team/member      (s/or :user :splitpea/user
+                               :team :splitpea/team))
+(s/def :team/members     (s/coll-of :team/member :min-count 1 :distinct true))
+(s/def :idea/instant     inst?)
+(s/def :idea/author      :splitpea/user)
+(s/def :idea/content     :string/not-empty)
+(s/def :idea/subject     (s/or :idea  :splitpea/idea
+                               :media :splitpea/media))
+(s/def :media/url        :string/not-empty)
+
+(comment
+
+  (require '[clojure.test.check.generators :as gen])
+
+  (gen/sample (s/gen :splitpea/entity) 10)
+
+  (valid-user? {:user/emails ["d"]})
+
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Entity predicates
+
+(defn valid-user?
+  [user]
+  (s/valid? :splitpea/user user))
+
+(defn valid-team?
+  [team]
+  (s/valid? :splitpea/team team))
+
+(defn valid-idea?
+  [idea]
+  (s/valid? :splitpea/idea idea))
+
+(defn valid-media?
+  [media]
+  (s/valid? :splitpea/media media))
+
+;; :db.entity/preds ------------------------------
+
+(defn valid-db-user?
+  [db eid]
+  (valid-user? (d/pull db '[*] eid)))
+
+(defn valid-db-team?
+  [db eid]
+  (valid-team? (d/pull db '[*] eid)))
+
+(defn valid-db-idea?
+  [db eid]
+  (valid-idea? (d/pull db '[*] eid)))
+
+(defn valid-db-media?
+  [db eid]
+  (valid-media? (d/pull db '[*] eid)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Essential state
 
 (def user-attrs
-  #{{:db/ident        :user/validate
-     :db.entity/attrs [:user/email]}
+  [{:db/ident        :user/validate
+    :db.entity/preds `valid-db-user?}
 
-    {:db/ident       :user/email
-     :db/unique      :db.unique/identity
-     :db/valueType   :db.type/string
-     :db/cardinality :db.cardinality/many
-     :db/doc         "Uniquely identifying email address of a user"}
+   {:db/ident       :user/emails
+    :db/unique      :db.unique/identity
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/many
+    :db/doc         "Uniquely identifying email addresses of a user, and the primary means of authentication"}
+   ])
 
-    {:db/ident       :user/display-name
-     :db/valueType   :db.type/string
-     :db/cardinality :db.cardinality/one
-     :db/doc         "Name by which a user is referred to by other users, and on the UI"}
+(def team-attrs
+  [{:db/ident        :team/validate
+    :db.entity/preds `valid-db-team?}
 
-    })
+   {:db/ident       :team/slug
+    :db/unique      :db.unique/identity
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/many
+    :db/doc         "Unique, URL-safe identifier of a team"}
 
-(def org-attrs
-  #{{:db/ident        :org/validate
-     :db.entity/attrs [:org/slug :org/display-name]}
-
-    {:db/ident       :org/slug
-     :db/unique      :db.unique/identity
-     :db/valueType   :db.type/string
-     :db/cardinality :db.cardinality/many
-     :db/doc         "Unique, URL-safe identifier of an organization"}
-
-    {:db/ident       :org/display-name
-     :db/valueType   :db.type/string
-     :db/cardinality :db.cardinality/one
-     :db/doc         "Human friendly name of an organization for display"}
-
-    {:db/ident       :org/users
-     :db/valueType   :db.type/ref
-     :db/cardinality :db.cardinality/many
-     :db/doc         "The members (users) of an organization"}
-
-    })
+   {:db/ident       :team/members
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/many
+    :db/doc         "Users and (sub)teams that make up this team."}
+   ])
 
 (def idea-attrs
-  #{{:db/ident        :idea/validate
-     :db.entity/attrs [:idea/author :idea/instant :idea/content]}
+  [{:db/ident        :idea/validate
+    :db.entity/preds `valid-db-idea?}
 
-    {:db/ident       :idea/author
-     :db/valueType   :db.type/ref
-     :db/cardinality :db.cardinality/one
-     :db/doc         "User that shared this idea"}
+   {:db/ident       :idea/author
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one
+    :db/doc         "User that shared this idea"}
 
-    {:db/ident       :idea/instant
-     :db/valueType   :db.type/instant
-     :db/cardinality :db.cardinality/one
-     :db/doc         "Instant of time that a user shared an idea"}
+   {:db/ident       :idea/instant
+    :db/valueType   :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/doc         "Instant of time that a user shared an idea"}
 
-    {:db/ident       :idea/content
-     :db/valueType   :db.type/string
-     :db/cardinality :db.cardinality/one
-     :db/doc         "User-entered content of an idea"}
+   {:db/ident       :idea/coordinate
+    :db/unique      :db.unique/identity
+    :db/valueType   :db.type/tuple
+    :db/tupleAttrs  [:idea/instant :idea/author]
+    :db/cardinality :db.cardinality/one
+    :db/doc         "Uniquely identifying [instant user-eid] of an idea. Coordinate in thought-space."}
 
-    {:db/ident       :idea/coordinate
-     :db/unique      :db.unique/identity
-     :db/valueType   :db.type/tuple
-     :db/tupleAttrs  [:idea/instant :idea/author]
-     :db/cardinality :db.cardinality/one
-     :db/doc         "Uniquely identifying [instant user-eid] of an idea. Coordinate in thought-space."}
+   {:db/ident       :idea/content
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc         "User-entered content of an idea"}
 
-    {:db/ident       :idea/subject
-     :db/valueType   :db.type/ref
-     :db/cardinality :db.cardinality/one
-     :db/doc         "Entity being discussed or described by a particular idea. Most commonly another idea."}
+   {:db/ident       :idea/subject
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one
+    :db/doc         "Entity being discussed or described by a particular idea. Most commonly another idea."}
+   ])
 
-    })
+(def media-attrs
+  [{:db/ident        :media/validate
+    :db.entity/preds `valid-db-media?}
+
+   {:db/ident       :media/url
+    :db/unique      :db.unique/identity
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc         "URL of an external media resource"}
+   ])
 
 (def essential-state
   (cset/union user-attrs
-              org-attrs
-              idea-attrs))
+              team-attrs
+              idea-attrs
+              media-attrs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Schema
+;; Derivations
 
+(def rules
+  '[
+
+    ;; "Top level" ideas
+    ;;   - Ones in which the subject is not itself another idea
+    ;;   - Can be constrained to a specific team
+
+    ;; What are ideas without a subject?
+    ;; Is it okay to not have a subject?
+
+    ;; Reddit style:
+    ;;   - Subject can be a link
+    ;;   - Subject can be the org itself (text post)
+    ;;   - Users vote on priority (but have fixed number of votes that can be in play)
+
+    ])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Schema (implementation)
+
+;; TODO: this should likely be moved to Tightrope
 (defn datomic->datascript
   [schema]
   (when-let [schema-kvs (seq (zipmap (map :db/ident schema) schema))]
@@ -114,45 +213,3 @@
 
 (def datascript-schema
   (datomic->datascript datomic-schema))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Base specs
-
-(s/def :splitpea/entity (s/or :user :splitpea/user
-                              :org  :splitpea/org
-                              :idea :splitpea/idea))
-
-(s/def :string/not-empty (s/and string? not-empty))
-
-(s/def :user/email :string/not-empty)
-(s/def :user/display-name :string/not-empty)
-(s/def :splitpea/user (s/keys :req [:user/email]
-                              :opt [:user/display-name]))
-
-(s/def :org/slug :string/not-empty)
-(s/def :org/display-name :string/not-empty)
-(s/def :org/users (s/coll-of :splitpea/user))
-(s/def :splitpea/org (s/keys :req [:org/slug
-                                   :org/display-name]
-                             :opt [:org/users]))
-
-(s/def :idea/instant inst?)
-(s/def :idea/author :splitpea/user)
-(s/def :idea/content :string/not-empty)
-(s/def :idea/subject :splitpea/entity)
-(s/def :splitpea/idea (s/keys :req [:idea/instant
-                                    :idea/author
-                                    :idea/content]
-                              :opt [:idea/subject]))
-
-(comment
-
-  (require '[clojure.test.check.generators :as gen])
-
-  (gen/sample (s/gen :splitpea/user))
-
-  (gen/sample (s/gen :splitpea/org))
-
-  (gen/sample (s/gen :splitpea/idea))
-
-  )

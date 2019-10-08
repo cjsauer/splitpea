@@ -1,0 +1,5 @@
+{:allow    [splitpea.model/valid-db-user?
+            splitpea.model/valid-db-team?
+            splitpea.model/valid-db-idea?
+            splitpea.model/valid-db-media?]
+ :app-name "splitpea-dev"}
