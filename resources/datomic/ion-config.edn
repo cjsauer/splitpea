@@ -2,4 +2,5 @@
             splitpea.model/valid-db-team?
             splitpea.model/valid-db-idea?
             splitpea.model/valid-db-media?]
+ :lambdas  {}
  :app-name "splitpea-dev"}
