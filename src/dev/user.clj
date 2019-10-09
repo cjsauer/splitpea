@@ -22,3 +22,8 @@
     (catch Exception e
       {:deploy-status "ERROR"
        :message       (.getMessage e)})))
+
+(defn deploy
+  []
+  (release {:creds-profile "sandbox"
+            :region "us-east-1"}))
