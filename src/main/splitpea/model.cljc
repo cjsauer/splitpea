@@ -129,14 +129,12 @@
   "Ensures that a team cannot be a member (or sub-member) of itself,
   thus enforcing a directed acylic graph upon the :team/members relation."
   [db eid]
-  (let [member-set (->> (d/q '[:find ?member
-                               :in $ % ?team
-                               :where
-                               (all-team-members ?team ?member)]
-                             db rules eid)
-                        flatten
-                        (into #{}))]
-    (not (contains? member-set eid))))
+  (empty?
+   (d/q '[:find ?member
+          :in $ % ?team ?member
+          :where
+          (all-team-members ?team ?member)]
+        db rules eid eid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema (implementation)

@@ -56,8 +56,7 @@
 
 (comment
 
-  (let [tx-data [{:db/ensure    :team/validate
-                  :team/slug    "A-Team"
+  (let [tx-data [{:team/slug    "A-Team"
                   :team/members [{:user/email "another"}
                                  {:user/email "calvin"}
                                  {:user/email "brittany"}]}]]
@@ -68,13 +67,14 @@
   (d/pull (d/db (get-conn)) '[* {:team/members [*]}] [:team/slug "A-Team"])
 
   (d/transact (get-conn) {:tx-data [{:db/ensure :team/validate
+                                     :db/id "temp"
                                      :team/slug "A-Team"
                                      :team/members
-                                     [[:team/slug "A-Team"]]}]})
+                                     ["temp"]}]})
 
   (d/transact (get-conn)
-              {:tx-data [[:db/retract [:team/slug "B-Team"]
-                          :team/members [:team/slug "B-Team"]]]})
+              {:tx-data [[:db/retract [:team/slug "A-Team"]
+                          :team/members [:team/slug "A-Team"]]]})
 
   (flatten
    (d/q '[:find (pull ?member [:user/email])
@@ -95,6 +95,13 @@
         (d/db (get-conn))
         model/rules
         [:team/slug "B-Team"]))
+
+  (empty?
+   (d/q '[:find ?member
+          :in $ % ?team ?member
+          :where
+          (all-team-members ?team ?member)]
+        (get-db) model/rules 29194232740708434 29194232740708434))
 
   (model/team-dag? (get-db) 29194232740708434)
 
