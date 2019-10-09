@@ -53,3 +53,61 @@
 (defn get-db
   []
   (d/db (get-conn)))
+
+;; (comment
+
+;;   (let [tx-data [{:team/slug    "A-Team"
+;;                   :team/members [{:user/email "another"}
+;;                                  {:user/email "calvin"}
+;;                                  {:user/email "brittany"}]}]]
+;;     (d/transact (get-conn) {:tx-data tx-data}))
+
+;;   (d/pull (get-db) '[* :team/_members] [:user/email "calvin"])
+
+;;   (d/pull (d/db (get-conn)) '[* {:team/members [*]}] [:team/slug "A-Team"])
+
+;;   (d/transact (get-conn) {:tx-data [{:db/ensure :team/validate
+;;                                      :team/slug "A-Team"
+;;                                      :team/members
+;;                                      [{:team/slug "B-Team"
+;;                                        :team/members {:user/email "derek"}}]}]})
+
+;;   (d/transact (get-conn)
+;;               {:tx-data [[:db/retract [:team/slug "B-Team"]
+;;                           :team/members [:user/email "calvin"]]]})
+
+;;   (flatten
+;;    (d/q '[:find (pull ?member [:user/email])
+;;           :in $ % [?ident ?val]
+;;           :where
+;;           [?me ?ident ?val]
+;;           (collaborators ?me ?member)
+;;           ]
+;;         (get-db)
+;;         model/rules
+;;         [:user/email "calvin"]))
+
+;;   (flatten
+;;    (d/q '[:find ?member
+;;           :in $ % ?team
+;;           :where
+;;           (all-team-members ?team ?member)
+;;           ]
+;;         (d/db (get-conn))
+;;         model/rules
+;;         [:team/slug "B-Team"]))
+
+;;   (empty?
+;;    (d/q '[:find ?member
+;;           :in $ % ?team ?member
+;;           :where
+;;           (all-team-members ?team ?member)]
+;;         (get-db) model/rules 29194232740708434 29194232740708434))
+
+;;   (model/team-dag? (get-db) 29194232740708434)
+
+;;   (get-conn)
+
+;;   (d/delete-database (get-client) {:db-name "splitpea-dev-db"})
+
+;;   )
