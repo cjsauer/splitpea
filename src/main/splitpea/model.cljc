@@ -25,7 +25,10 @@
    ])
 
 (def team-attrs
-  [{:db/ident       :team/slug
+  [{:db/ident        :team/validate
+    :db.entity/preds [`team-dag?]}
+
+   {:db/ident       :team/slug
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many
@@ -86,6 +89,25 @@
 (def rules
   '[
 
+    [(all-team-members [?team] ?member)
+     [?team :team/members ?member]]
+    [(all-team-members [?team] ?member)
+     [?team :team/members ?subteam]
+     (all-team-members ?subteam ?member)]
+
+    [(all-team-users [?team] ?u)
+     [?team :team/members ?u]
+     [?u :user/email]]
+    [(all-team-users [?team] ?u)
+     [?team :team/members ?subteam]
+     (all-team-users ?subteam ?u)]
+
+    [(all-known-users [?email] ?known)
+     [?me :user/email ?email]
+     [?team :team/members ?me]
+     (all-team-users ?team ?known)
+     [(not= ?me ?known)]]
+
     ;; "Top level" ideas
     ;;   - Ones in which the subject is not itself another idea
     ;;   - Can be constrained to a specific team
@@ -99,6 +121,22 @@
     ;;   - Users vote on priority (but have fixed number of votes that can be in play)
 
     ])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Constraints
+
+(defn team-dag?
+  "Ensures that a team cannot be a member (or sub-member) of itself,
+  thus enforcing a directed acylic graph upon the :team/members relation."
+  [db eid]
+  (let [member-set (->> (d/q '[:find ?member
+                               :in $ % ?team
+                               :where
+                               (all-team-members ?team ?member)]
+                             db rules eid)
+                        flatten
+                        (into #{}))]
+    (not (contains? member-set eid))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema (implementation)

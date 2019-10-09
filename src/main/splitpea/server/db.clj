@@ -20,14 +20,14 @@
   (contains? (d/pull db {:eid ident :selector [:db/ident]})
              :db/ident))
 
-(defn- data-loaded?
+(defn- schema-loaded?
   [db]
   (has-ident? db (-> model/datomic-schema first :db/ident)))
 
 (defn- load-schema
   [conn]
   (let [db (d/db conn)]
-    (if (data-loaded? db)
+    (if (schema-loaded? db)
       :already-loaded
       (d/transact conn {:tx-data model/datomic-schema}))))
 
@@ -50,21 +50,61 @@
   []
   (ensure-dataset "splitpea-dev-db" `load-schema))
 
+(defn get-db
+  []
+  (d/db (get-conn)))
+
 (comment
 
-  (let [tx-data {
-                 ;; :db/ensure :user/validate
-                 ;; :user/email "calvin"
+  (let [tx-data [{:team/slug "A-Team"
+                  :team/members [{:user/email "another"}]}]]
+    (d/transact (get-conn) {:tx-data tx-data}))
 
-                 :db/ensure :team/validate
-                 :team/slug "test"
-                 :team/members [[:user/email "calvin"]]
-                 }]
-    (d/transact (get-conn) {:tx-data [tx-data]}))
+  (d/pull (get-db) '[] [:user/email "calvin"])
 
-  (d/pull (d/db (get-conn)) '[*] [:user/email "calvin"])
+  (d/pull (d/db (get-conn)) '[:db/id {:team/members [:user/email]}] [:team/slug "A-Team"])
 
-  (d/pull (d/db (get-conn)) '[{:team/members [:user/emails]}] [:team/slug "test"])
+  (d/q '[:find ?tm-email
+         :in $ ?email
+         :where
+         [?me :user/email ?email]
+         [?team :team/members ?me]
+         [?team :team/members ?tm]
+         [?tm :user/email ?tm-email]
+         [(!= ?me ?tm)]
+         ]
+       (d/db (get-conn))
+       "calvin")
+
+  (d/transact (get-conn) {:tx-data [{:team/slug "B-Team"
+                                     :team/members
+                                     [[:team/slug "B-Team"]]}]})
+
+  (d/transact (get-conn)
+              {:tx-data [[:db/retract [:team/slug "B-Team"]
+                          :team/members [:team/slug "B-Team"]]]})
+
+  (flatten
+   (d/q '[:find (pull ?member [:user/email])
+          :in $ % ?email
+          :where
+          (all-known-users ?email ?member)
+          ]
+        (d/db (get-conn))
+        model/rules
+        "calvin"))
+
+  (flatten
+   (d/q '[:find ?member
+          :in $ % ?team
+          :where
+          (all-team-members ?team ?member)
+          ]
+        (d/db (get-conn))
+        model/rules
+        [:team/slug "B-Team"]))
+
+  (model/team-dag? (get-db) 10423370231316566)
 
   (get-conn)
 
