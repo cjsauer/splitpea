@@ -112,11 +112,10 @@
      [?team :team/members ?subteam]
      (all-team-users ?subteam ?u)]
 
-    [(all-known-users [?email] ?known)
-     [?me :user/email ?email]
+    [(collaborators [?me] ?collaborator)
      [?team :team/members ?me]
-     (all-team-users ?team ?known)
-     [(not= ?me ?known)]]
+     (all-team-users ?team ?collaborator)
+     [(not= ?me ?collaborator)]]
 
     ;; "Top level" ideas
     ;;   - Ones in which the subject is not itself another idea

@@ -62,29 +62,30 @@
                                  {:user/email "brittany"}]}]]
     (d/transact (get-conn) {:tx-data tx-data}))
 
-  (d/pull (get-db) '[*] [:user/email "calvin"])
+  (d/pull (get-db) '[* :team/_members] [:user/email "calvin"])
 
   (d/pull (d/db (get-conn)) '[* {:team/members [*]}] [:team/slug "A-Team"])
 
   (d/transact (get-conn) {:tx-data [{:db/ensure :team/validate
-                                     :db/id "temp"
                                      :team/slug "A-Team"
                                      :team/members
-                                     ["temp"]}]})
+                                     [{:team/slug "B-Team"
+                                       :team/members {:user/email "derek"}}]}]})
 
   (d/transact (get-conn)
-              {:tx-data [[:db/retract [:team/slug "A-Team"]
-                          :team/members [:team/slug "A-Team"]]]})
+              {:tx-data [[:db/retract [:team/slug "B-Team"]
+                          :team/members [:user/email "calvin"]]]})
 
   (flatten
    (d/q '[:find (pull ?member [:user/email])
-          :in $ % ?email
+          :in $ % [?ident ?val]
           :where
-          (all-known-users ?email ?member)
+          [?me ?ident ?val]
+          (collaborators ?me ?member)
           ]
-        (d/db (get-conn))
+        (get-db)
         model/rules
-        "calvin"))
+        [:user/email "calvin"]))
 
   (flatten
    (d/q '[:find ?member
