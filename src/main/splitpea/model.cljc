@@ -1,6 +1,5 @@
 (ns splitpea.model
   (:require [clojure.set :as cset]
-            [clojure.spec.alpha :as s]
             #?(:clj  [datomic.client.api :as d])
             #?(:cljs [datascript.core :as d])))
 
@@ -15,107 +14,10 @@
              })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Base specs
-
-;; entities
-
-(s/def :splitpea/entity (s/or :user  :splitpea/user
-                              :team  :splitpea/team
-                              :idea  :splitpea/idea
-                              :media :splitpea/media))
-
-(s/def :splitpea/user  (s/keys :req [:user/email]))
-(s/def :splitpea/team  (s/keys :req [:team/slug
-                                     :team/members]))
-(s/def :splitpea/idea  (s/keys :req [:idea/instant
-                                     :idea/author
-                                     :idea/content]
-                               :opt [:idea/subject]))
-(s/def :splitpea/media (s/keys :req [:media/url]))
-
-;; general
-
-(s/def :string/not-empty (s/and string? not-empty))
-(s/def :email/address    :string/not-empty)
-
-;; user
-
-(s/def :user/email (s/coll-of :email/address :min-count 1))
-
-;; team
-
-(s/def :team/slug   :string/not-empty)
-(s/def :team/member (s/or :user :splitpea/user
-                          :team :splitpea/team))
-(s/def :team/members (s/coll-of :team/member :min-count 1))
-
-;; idea
-
-(s/def :idea/instant inst?)
-(s/def :idea/author  :splitpea/user)
-(s/def :idea/content :string/not-empty)
-(s/def :idea/subject (s/or :idea  :splitpea/idea
-                           :media :splitpea/media))
-
-;; media
-
-(s/def :media/url :string/not-empty)
-
-(comment
-
-  (require '[clojure.test.check.generators :as gen])
-
-  (gen/sample (s/gen :splitpea/entity) 10)
-
-  (valid-user? {:user/email "d"})
-
-  )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Entity predicates
-
-(defn valid-user?
-  [user]
-  (s/valid? :splitpea/user user))
-
-(defn valid-team?
-  [team]
-  (s/valid? :splitpea/team team))
-
-(defn valid-idea?
-  [idea]
-  (s/valid? :splitpea/idea idea))
-
-(defn valid-media?
-  [media]
-  (s/valid? :splitpea/media media))
-
-;; :db.entity/preds ------------------------------
-
-(defn db-valid-user?
-  [db eid]
-  (valid-user? (d/pull db '[*] eid)))
-
-(defn db-valid-team?
-  [db eid]
-  (valid-team? (d/pull db '[*] eid)))
-
-(defn db-valid-idea?
-  [db eid]
-  (valid-idea? (d/pull db '[*] eid)))
-
-(defn db-valid-media?
-  [db eid]
-  (valid-media? (d/pull db '[*] eid)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Essential state
 
 (def user-attrs
-  [{:db/ident        :user/validate
-    :db.entity/preds `db-valid-user?}
-
-   {:db/ident       :user/email
+  [{:db/ident       :user/email
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many
@@ -123,10 +25,7 @@
    ])
 
 (def team-attrs
-  [{:db/ident        :team/validate
-    :db.entity/preds `db-valid-team?}
-
-   {:db/ident       :team/slug
+  [{:db/ident       :team/slug
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many
@@ -139,10 +38,7 @@
    ])
 
 (def idea-attrs
-  [{:db/ident        :idea/validate
-    :db.entity/preds `db-valid-idea?}
-
-   {:db/ident       :idea/author
+  [{:db/ident       :idea/author
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one
     :db/doc         "User that shared this idea"}
@@ -171,10 +67,7 @@
    ])
 
 (def media-attrs
-  [{:db/ident        :media/validate
-    :db.entity/preds `db-valid-media?}
-
-   {:db/ident       :media/url
+  [{:db/ident       :media/url
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one
