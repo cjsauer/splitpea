@@ -107,7 +107,7 @@
 
 (def user-attrs
   [{:db/ident        :user/validate
-    :db.entity/preds `db-valid--user?}
+    :db.entity/preds `db-valid-user?}
 
    {:db/ident       :user/email
     :db/unique      :db.unique/identity
@@ -134,7 +134,7 @@
 
 (def idea-attrs
   [{:db/ident        :idea/validate
-    :db.entity/preds `db-valid--idea?}
+    :db.entity/preds `db-valid-idea?}
 
    {:db/ident       :idea/author
     :db/valueType   :db.type/ref
@@ -166,7 +166,7 @@
 
 (def media-attrs
   [{:db/ident        :media/validate
-    :db.entity/preds `db-valid--media?}
+    :db.entity/preds `db-valid-media?}
 
    {:db/ident       :media/url
     :db/unique      :db.unique/identity
