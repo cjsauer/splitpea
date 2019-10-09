@@ -1,6 +1,6 @@
-{:allow    [splitpea.model/valid-db-user?
-            splitpea.model/valid-db-team?
-            splitpea.model/valid-db-idea?
-            splitpea.model/valid-db-media?]
+{:allow    [splitpea.model/db-valid-user?
+            splitpea.model/db-valid-team?
+            splitpea.model/db-valid-idea?
+            splitpea.model/db-valid-media?]
  :lambdas  {}
  :app-name "splitpea-dev"}

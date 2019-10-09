@@ -52,7 +52,7 @@
 
 (comment
 
-  (let [my-user {;; :db/ensure :team/validate
+  (let [my-user {:db/ensure :user/validate
                  :user/email "calvin"
                  ;; :team/slug "test"
                  ;; :team/members [[:user/emails "calvin"] [:user/emails "brittany"]]
