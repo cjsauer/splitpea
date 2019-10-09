@@ -92,15 +92,21 @@
 
 ;; :db.entity/preds ------------------------------
 
-(defn db-entity-validator
-  [pred]
-  (fn [db eid]
-    (pred (d/pull db '[*] eid))))
+(defn db-valid-user?
+  [db eid]
+  (valid-user? (d/pull db '[*] eid)))
 
-(def db-valid-user?  (db-entity-validator valid-user?))
-(def db-valid-team?  (db-entity-validator valid-team?))
-(def db-valid-idea?  (db-entity-validator valid-idea?))
-(def db-valid-media? (db-entity-validator valid-media?))
+(defn db-valid-team?
+  [db eid]
+  (valid-team? (d/pull db '[*] eid)))
+
+(defn db-valid-idea?
+  [db eid]
+  (valid-idea? (d/pull db '[*] eid)))
+
+(defn db-valid-media?
+  [db eid]
+  (valid-media? (d/pull db '[*] eid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Essential state
