@@ -1,7 +1,7 @@
 {:deps {:aliases [:cljs :dev]}
 
  :dev-http {3456 {:root    "public"
-                  :handler splitpea.server/handler
+                  :handler splitpea.server.ion/handler
                   }}
 
  :builds

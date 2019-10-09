@@ -5,12 +5,15 @@
             [splitpea.resolvers :as shared-resolvers]
             [splitpea.server.resolvers :as server-resolvers]))
 
-(def handler
+(defn handler
+  [req]
   (let [all-resolvers (concat shared-resolvers/all
-                              server-resolvers/all)]
-    (rope/tightrope-handler {:path "/api"
-                             :parser-opts {:env {:conn (db/get-conn)}
-                                           :resolvers all-resolvers}})))
+                              server-resolvers/all)
+        rope-config   {:path "/api"
+                       :parser-opts {:env {:conn (db/get-conn)}
+                                     :resolvers all-resolvers}}
+        rope-handler  (rope/tightrope-handler rope-config)]
+    (rope-handler req)))
 
 (def ionized-handler
   (apigw/ionize handler))
