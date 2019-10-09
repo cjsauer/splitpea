@@ -17,7 +17,10 @@
 ;; Essential state
 
 (def user-attrs
-  [{:db/ident       :user/email
+  [{:db/ident        :user/validate
+    :db.entity/attrs [:user/email]}
+
+   {:db/ident       :user/email
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/many
@@ -26,6 +29,7 @@
 
 (def team-attrs
   [{:db/ident        :team/validate
+    :db.entity/attrs [:team/slug :team/members]
     :db.entity/preds `team-dag?}
 
    {:db/ident       :team/slug
@@ -41,7 +45,10 @@
    ])
 
 (def idea-attrs
-  [{:db/ident       :idea/author
+  [{:db/ident        :idea/validate
+    :db.entity/attrs [:idea/author :idea/instant :idea/content :idea/subject]}
+
+   {:db/ident       :idea/author
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one
     :db/doc         "User that shared this idea"}
@@ -70,7 +77,10 @@
    ])
 
 (def media-attrs
-  [{:db/ident       :media/url
+  [{:db/ident        :media/validate
+    :db.entity/attrs [:media/url]}
+
+   {:db/ident       :media/url
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one
