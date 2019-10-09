@@ -2,18 +2,17 @@
   (:require [tightrope.server :as rope]
             [splitpea.resolvers :as shared-resolvers]
             [splitpea.server.resolvers :as server-resolvers]
-            [com.wsscode.pathom.connect :as pc]
-            [clojure.core.async :as a]))
+            [splitpea.server.db :as db]))
 
-(def all-resolvers
-  (concat shared-resolvers/all
-          server-resolvers/all))
-
-(def handler
-  (rope/tightrope-handler
-   {:parser-opts {:resolvers all-resolvers}
-    :path "/api"
-    }))
+(defn handler
+  [req]
+  (let [all-resolvers (concat shared-resolvers/all
+                              server-resolvers/all)
+        rope-config   {:path "/api"
+                       :parser-opts {:env {:conn (db/get-conn)}
+                                     :resolvers all-resolvers}}
+        rope-handler  (rope/tightrope-handler rope-config)]
+    (rope-handler req)))
 
 
 (comment
