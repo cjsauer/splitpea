@@ -26,7 +26,7 @@
 
 (def team-attrs
   [{:db/ident        :team/validate
-    :db.entity/preds [`team-dag?]}
+    :db.entity/preds `team-dag?}
 
    {:db/ident       :team/slug
     :db/unique      :db.unique/identity

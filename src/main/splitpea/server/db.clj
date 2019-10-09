@@ -56,29 +56,21 @@
 
 (comment
 
-  (let [tx-data [{:team/slug "A-Team"
-                  :team/members [{:user/email "another"}]}]]
+  (let [tx-data [{:db/ensure    :team/validate
+                  :team/slug    "A-Team"
+                  :team/members [{:user/email "another"}
+                                 {:user/email "calvin"}
+                                 {:user/email "brittany"}]}]]
     (d/transact (get-conn) {:tx-data tx-data}))
 
-  (d/pull (get-db) '[] [:user/email "calvin"])
+  (d/pull (get-db) '[*] [:user/email "calvin"])
 
-  (d/pull (d/db (get-conn)) '[:db/id {:team/members [:user/email]}] [:team/slug "A-Team"])
+  (d/pull (d/db (get-conn)) '[* {:team/members [*]}] [:team/slug "A-Team"])
 
-  (d/q '[:find ?tm-email
-         :in $ ?email
-         :where
-         [?me :user/email ?email]
-         [?team :team/members ?me]
-         [?team :team/members ?tm]
-         [?tm :user/email ?tm-email]
-         [(!= ?me ?tm)]
-         ]
-       (d/db (get-conn))
-       "calvin")
-
-  (d/transact (get-conn) {:tx-data [{:team/slug "B-Team"
+  (d/transact (get-conn) {:tx-data [{:db/ensure :team/validate
+                                     :team/slug "A-Team"
                                      :team/members
-                                     [[:team/slug "B-Team"]]}]})
+                                     [[:team/slug "A-Team"]]}]})
 
   (d/transact (get-conn)
               {:tx-data [[:db/retract [:team/slug "B-Team"]
@@ -104,7 +96,7 @@
         model/rules
         [:team/slug "B-Team"]))
 
-  (model/team-dag? (get-db) 10423370231316566)
+  (model/team-dag? (get-db) 29194232740708434)
 
   (get-conn)
 
