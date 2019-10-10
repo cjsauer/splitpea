@@ -1,19 +1,21 @@
 {:paths ["src/main" "resources"]
 
  :mvn/repos {"datomic-cloud" {:url "s3://datomic-releases-1fc2183a/maven/releases"}}
- :deps      {rum                    {:mvn/version "0.11.3"}
-             datascript             {:mvn/version "0.18.4"}
-             clj-http               {:mvn/version "3.10.0"}
-             cljs-http              {:mvn/version "0.1.46"}
-             cheshire               {:mvn/version "5.9.0"}
-             compojure              {:mvn/version "1.6.1"}
-             com.wsscode/pathom     {:mvn/version "2.2.25"}
-             cjsauer/tightrope      {:git/url "https://github.com/cjsauer/tightrope"
-                                     :sha     "6bee3bfa1c69ee2bd8d9ef080a594d8c305779e5"}
-             org.clojure/clojure    {:mvn/version "1.10.0"}
-             org.clojure/core.async {:mvn/version "0.4.500"}
-             org.clojure/spec.alpha {:mvn/version "0.2.176"}
-             com.datomic/ion        {:mvn/version "0.9.35"}
+ :deps      {org.clojure/clojure        {:mvn/version "1.10.0"}
+             org.clojure/core.async     {:mvn/version "0.4.500"}
+             org.clojure/spec.alpha     {:mvn/version "0.2.176"}
+             com.datomic/ion            {:mvn/version "0.9.35"}
+             rum                        {:mvn/version "0.11.3"}
+             datascript                 {:mvn/version "0.18.4"}
+             clj-http                   {:mvn/version "3.10.0"}
+             cljs-http                  {:mvn/version "0.1.46"}
+             cheshire                   {:mvn/version "5.9.0"}
+             compojure                  {:mvn/version "1.6.1"}
+             com.wsscode/pathom         {:mvn/version "2.2.25"}
+             com.wsscode/pathom-datomic {:git/url "https://github.com/cjsauer/pathom-datomic.git"
+                                         :sha     "2a3440372c14bf6ccab49cb7d208ef0239815d4f"}
+             cjsauer/tightrope          {:git/url "https://github.com/cjsauer/tightrope"
+                                         :sha     "6bee3bfa1c69ee2bd8d9ef080a594d8c305779e5"}
              }
  :aliases
  {:cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.8.59"}}}
