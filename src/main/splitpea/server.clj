@@ -10,18 +10,19 @@
             ))
 
 (defn custom-parser
-  [resolvers env]
-  (p/parser
+  [{:keys [env resolvers]}]
+  (p/parallel-parser
    {::p/env     (merge
                  {::p/reader               [p/map-reader
-                                            pc/reader2
+                                            pc/parallel-reader
                                             pc/open-ident-reader
                                             p/env-placeholder-reader]
                   ::p/placeholder-prefixes #{">"}}
                  env)
-    ::p/mutate  pc/mutate
-    ::p/plugins [(pc/connect-plugin {::pc/register resolvers})
+    ::p/mutate  pc/mutate-async
+    ::p/plugins [(pc/connect-plugin {::pc/register (or resolvers [])})
                  (pcd/datomic-connect-plugin (assoc client-config ::pcd/conn (:conn env)))
+                 p/elide-special-outputs-plugin
                  p/error-handler-plugin
                  p/trace-plugin]}))
 
@@ -30,7 +31,8 @@
   (let [all-resolvers (concat shared-resolvers/all
                               server-resolvers/all)
         rope-config   {:path "/api"
-                       :parser (custom-parser all-resolvers {:conn (db/get-conn)})}
+                       :parser (custom-parser {:resolvers all-resolvers
+                                               :env {:conn (db/get-conn)}})}
         rope-handler  (rope/tightrope-handler rope-config)]
     (rope-handler req)))
 
