@@ -108,11 +108,4 @@
 
   (d/delete-database (get-client) {:db-name "splitpea-dev-db"})
 
-  (flatten
-   (d/q '[:find (pull ?e [*])
-          :where
-          [_ :db.install/attribute ?e]
-          [?e :db/ident ?ident]]
-        (get-db)))
-
   )

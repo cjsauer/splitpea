@@ -42,13 +42,18 @@
   (require '[clojure.java.io :as io]
            '[clojure.core.async :as a])
 
-  (let [parser (custom-parser (concat shared-resolvers/all server-resolvers/all)
-                              {:conn (db/get-conn)})]
-    (parser {} [{[:team/slug "red-team"] [{:team/members [:user/email]}]}]))
+  (let [parser (custom-parser {:resolvers (concat shared-resolvers/all server-resolvers/all)
+                               :env {:conn (db/get-conn)}})]
+    (a/<!! (parser {} [{[:team/slug "red-team"] [{:team/members [:user/email]}]}])))
 
-  (handler
-   {:request-method :post
-    :uri "/api"
-    :body (io/input-stream (.getBytes (str [{[:org/slug "carrot"] [:link/add]}])))})
+  (-> (handler
+       {:request-method :post
+        :uri "/api"
+        :headers {"accept" "application/edn"
+                  "content-type" "application/edn"}
+        :body (io/input-stream (.getBytes (str [{[:team/slug "red-team"] [{:team/members [:user/email]}]}])))})
+      :body
+      slurp
+      )
 
   )
