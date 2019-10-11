@@ -4,3 +4,4 @@ public/js/
 .cpcache/
 target/
 .datomic-ions/
+.DS_Store
