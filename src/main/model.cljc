@@ -1,17 +1,7 @@
 (ns splitpea.model
-  (:require [clojure.set :as cset]
+  (:require [tightrope.schema :as rope-schema]
             #?(:clj  [datomic.client.api :as d])
             #?(:cljs [datascript.core :as d])))
-
-(def schema {:user/me      {:db/valueType :db.type/ref}
-             :user/handle  {:db/unique :db.unique/identity}
-             :login/form   {:db/valueType :db.type/ref}
-             :org/slug     {:db/unique :db.unique/identity}
-             :org/uuid     {:db/unique :db.unique/identity}
-             :org/sections {:db/valueType   :db.type/ref
-                            :db/cardinality :db.cardinality/many}
-             :section/uuid {:db/unique :db.unique/identity}
-             })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Essential state
@@ -88,10 +78,10 @@
    ])
 
 (def essential-state
-  (cset/union user-attrs
-              team-attrs
-              idea-attrs
-              media-attrs))
+  (concat user-attrs
+          team-attrs
+          idea-attrs
+          media-attrs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Derivations
@@ -148,23 +138,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema (implementation)
 
-;; TODO: this should likely be moved to Tightrope
-(defn datomic->datascript
-  [schema]
-  (when-let [schema-kvs (seq (zipmap (map :db/ident schema) schema))]
-    (letfn [(select-compat [[k {:db/keys [valueType unique cardinality isComponent]}]]
-              [k (cond-> {}
-                   unique                               (assoc :db/unique unique)
-                   (some? isComponent)                  (assoc :db/isComponent isComponent)
-                   (= :db.cardinality/many cardinality) (assoc :db/cardinality cardinality)
-                   (= :db.type/ref valueType)           (assoc :db/valueType valueType))])]
-      (into {}
-            (comp (map select-compat)
-                  (filter (fn [[k v]] (not-empty v))))
-            schema-kvs))))
-
 (def datomic-schema
   essential-state)
 
 (def datascript-schema
-  (datomic->datascript datomic-schema))
+  (rope-schema/datomic->datascript datomic-schema))
