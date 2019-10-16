@@ -1,6 +1,6 @@
 node_modules/
 .shadow-cljs/
-public/js/
+resources/public/js/
 .cpcache/
 target/
 .datomic-ions/
