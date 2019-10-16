@@ -17,8 +17,8 @@
 
 (def web-schema
   (merge model/datascript-schema
-         {:login/form  {:db/valueType :db.type/ref}
-          :user/me     {:db/valueType :db.type/ref}
+         {:user/me     {:db/valueType   :db.type/ref}
+          :login/form  {:db/valueType :db.type/ref}
           :login/email {}
           }))
 

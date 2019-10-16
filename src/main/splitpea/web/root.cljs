@@ -13,8 +13,8 @@
    [:h1 {:style {:font-size "2em"}} greeting]])
 
 (def *user-dashboard
-  {:idents #{:user/email}
-   :query  [:user/email :user/greeting]
+  {:idents [:user/email]
+   :query  [:user/primary-email :user/greeting]
    })
 
 (rum/defc user-dashboard
@@ -27,11 +27,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Login
 
+(def form-fields [:login/email])
+
 (def *login-form
-  {:idents        #{::rope/id}
-   :init-tx       {::rope/id (rope/ropeid)
-                   :login/email ""}
-   :query         [:login/email :ui/mutating?]
+  {:idents        [::rope/id]
+   :mount-tx      {::rope/id (rope/ropeid)}
+   :query         form-fields
    :auto-retract? true
    })
 
@@ -39,7 +40,7 @@
   < (rope/ds-mixin *login-form)
   [{:keys       [target]
     ::rope/keys [data upsert! mutate!!]}]
-  (let [login! #(mutate!! target 'splitpea.server.resolvers/login! (select-keys data [:login/email]))]
+  (let [login! #(mutate!! target 'splitpea.server.resolvers/login! (select-keys data form-fields))]
     [:div
      [:input {:type        "text"
               :placeholder "enter a username"
@@ -53,9 +54,10 @@
 
 (def *authn
   {:lookup   [:db/ident :me]
-   :mount-tx [{:db/ident :me
-               :login/form (:init-tx *login-form)}]
-   :query    [{:user/me (:query *user-dashboard)} :login/form :ui/freshening? :ui/mutating?]
+   :mount-tx {:db/ident :me}
+   :query    [{:user/me (:idents *user-dashboard)}
+              :ui/freshening?
+              :ui/mutating?]
    ;; :freshen? true
    })
 
@@ -69,8 +71,7 @@
        [:pre (str "AUTHN " data)]
        (if me
          (user-dashboard me)
-         (login-form (merge {:target *authn}
-                            (:login/form data))))])))
+         (login-form {:target *authn}))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Root
