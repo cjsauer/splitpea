@@ -10,21 +10,19 @@
   {::db (d/db conn)})
 
 (pc/defresolver me
-  [{:keys [request]} {::keys [db]}]
-  {::pc/input  #{::db}
-   ::pc/output #{:user/me}}
-  (when-let [authz (-> request :headers (get "authorization"))]
-    (when-let [user (db/entity-by db :user/email authz)]
+  [{:keys [request]} _]
+  {::pc/output #{:user/me}}
+  (when-let [token (-> request :headers (get "authorization"))]
+    (when-let [user (db/entity-by db :user/email token)]
       {:user/me user})))
 
 (pc/defmutation login!
-  [_ {:login/keys [handle]}]
-  {::pc/input #{:login/handle}
-   ::pc/output #{:user/me}}
-  (println "Checking handle: " handle)
-  (when-let [user (get @users handle)]
-    (println "Loggin in user: " handle)
-    {:user/me user}))
+  [_ {:login/keys [email]}]
+  {::pc/input  #{:login/handle}
+   ::pc/output #{:login/token}}
+  ;; TODO: email login link, token gathered from there
+  ;; For now just pass it back directly
+  {:login/token email})
 
 (def all [db
           me

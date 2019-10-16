@@ -4,7 +4,7 @@
 
 (defn entity-by
   [db k v & [pull-expr]]
-  (d/pull db (or pull-expr '[*]) [k v]))
+  (d/pull db (or pull-expr [k]) [k v]))
 
 (defn xact
   [conn tx-data]
