@@ -6,7 +6,7 @@
             [tightrope.client :as rope]
             [splitpea.model :as model]
             [splitpea.web.root :as root]
-            [splitpea.web.resolvers :as shared-resolvers]
+            [splitpea.resolvers :as shared-resolvers]
             [splitpea.web.resolvers :as web-resolvers]))
 
 (defn- authz-middleware
@@ -15,8 +15,15 @@
     (update req :headers merge {"Authorization" token})
     req))
 
+(def web-schema
+  (merge model/datascript-schema
+         {:login/form  {:db/valueType :db.type/ref}
+          :user/me     {:db/valueType :db.type/ref}
+          :login/email {}
+          }))
+
 (defonce app-ctx (rope/make-framework-context
-                  {:schema      model/datascript-schema
+                  {:schema      web-schema
                    :parser-opts {:resolvers (concat shared-resolvers/all
                                                     web-resolvers/all)}
                    :remote      {:uri "/api"

@@ -18,11 +18,11 @@
 
 (pc/defmutation login!
   [_ {:login/keys [email]}]
-  {::pc/input  #{:login/handle}
-   ::pc/output #{:login/token}}
+  {::pc/input  #{:login/email}
+   ::pc/output #{:user/me}}
   ;; TODO: email login link, token gathered from there
   ;; For now just pass it back directly
-  {:login/token email})
+  {:user/me {:user/email email}})
 
 (def all [db
           me
