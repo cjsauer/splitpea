@@ -52,7 +52,8 @@
                     :team/slug    "blue-team"
                     :team/members [{:user/email "another"}
                                    {:user/email "calvin"}
-                                   {:user/email "brittany"}]}
+                                   {:user/email "brittany"}
+                                   {:user/email "billy"}]}
                    {:db/ensure    :team/validate
                     :team/slug    "red-team"
                     :team/members [{:user/email "derek"}]
@@ -75,6 +76,6 @@
 
 
 
-  (d/delete-database (irope/get-client config) {:db-name "splitpea-dev-db"})
+  (d/delete-database (irope/get-client (:datomic-config config)) {:db-name "splitpea-dev-db"})
 
   )

@@ -10,8 +10,9 @@
   {::db (d/db conn)})
 
 (pc/defresolver me
-  [{:keys [request]} _]
-  {::pc/output #{:user/me}}
+  [{:keys [request]} {::keys [db]}]
+  {::pc/input  #{::db}
+   ::pc/output #{:user/me}}
   (when-let [token (-> request :headers (get "authorization"))]
     (when-let [user (db/entity-by db :user/email token)]
       {:user/me user})))

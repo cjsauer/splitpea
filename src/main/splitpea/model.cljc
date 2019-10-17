@@ -13,8 +13,8 @@
    {:db/ident       :user/email
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
-    :db/cardinality :db.cardinality/many
-    :db/doc         "Uniquely identifying email addresses of a user, and the primary means of authentication"}
+    :db/cardinality :db.cardinality/one
+    :db/doc         "Uniquely identifying email address of a user, and the primary means of authentication"}
    ])
 
 (def team-attrs
@@ -25,7 +25,7 @@
    {:db/ident       :team/slug
     :db/unique      :db.unique/identity
     :db/valueType   :db.type/string
-    :db/cardinality :db.cardinality/many
+    :db/cardinality :db.cardinality/one
     :db/doc         "Unique, URL-safe identifier of a team"}
 
    {:db/ident       :team/members

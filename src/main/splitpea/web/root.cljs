@@ -1,6 +1,7 @@
 (ns splitpea.web.root
   (:require [rum.core :as rum]
-            [tightrope.client :as rope]))
+            [tightrope.client :as rope]
+            [cljs.core.async :refer (go <!)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Dashboard
