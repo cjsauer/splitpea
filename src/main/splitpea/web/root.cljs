@@ -14,9 +14,10 @@
    [:h1 {:style {:font-size "2em"}} greeting]])
 
 (def *user-dashboard
-  {:idents [:user/email]
-   :query  [:user/primary-email :user/greeting]
+  {:idents   [:user/email]
+   :query    [:user/email :user/greeting]
    })
+
 
 (rum/defc user-dashboard
   < (rope/ds-mixin *user-dashboard)
@@ -40,14 +41,16 @@
 (rum/defc login-form
   < (rope/ds-mixin *login-form)
   [{:keys       [target]
-    ::rope/keys [data upsert! mutate!!]}]
-  (let [login! #(mutate!! target 'splitpea.server.resolvers/login! (select-keys data form-fields))]
+    ::rope/keys [data upsert! mutate! mutate!!]}]
+  (let [login!           #(mutate!! target 'splitpea.server.authn/login! (select-keys data form-fields))
+        store-token!     #(mutate! 'splitpea.web.authn/store-token! %)
+        login-and-store! #(go (store-token! (<! (login!))))]
     [:div
      [:input {:type        "text"
               :placeholder "enter a username"
               :value       (or (:login/email data) "")
               :on-change   #(upsert! {:login/email (-> % .-target .-value)})}]
-     [:button {:on-click login!} "Login!"]
+     [:button {:on-click login-and-store!} "Login!"]
      [:pre (str "LOGIN " data)]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,22 +59,24 @@
 (def *authn
   {:lookup   [:db/ident :me]
    :mount-tx {:db/ident :me}
-   :query    [{:user/me (:idents *user-dashboard)}
+   :query    [:login/token
+              {:user/me (:query *user-dashboard)}
               :ui/freshening?
               :ui/mutating?]
-   ;; :freshen? true
+   :freshen? true
    })
 
 (rum/defc authn
   < (rope/ds-mixin *authn)
   [{::rope/keys [data]}]
-  (let [{:user/keys [me]
-         :ui/keys   [freshening?]} data]
-    (when-not freshening?
+  (let [{:login/keys [token]
+         :ui/keys    [freshening?]} data]
+    (if freshening?
+      [:p "Loading..."]
       [:div
        [:pre (str "AUTHN " data)]
-       (if me
-         (user-dashboard me)
+       (if token
+         (user-dashboard (:user/me data))
          (login-form {:target *authn}))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

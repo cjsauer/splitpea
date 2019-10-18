@@ -1,16 +1,18 @@
 (ns splitpea.server
   (:require [tightrope.server.ions :as irope]
             [splitpea.model :as model]
-            [splitpea.resolvers :as shared-resolvers]
-            [splitpea.server.resolvers :as server-resolvers]
+            [splitpea.resolvers :as shared]
+            [splitpea.server.db :as db]
+            [splitpea.server.authn :as authn]
             [datomic.ion.lambda.api-gateway :as apigw]
             ))
 
 (def config
   {:path           "/api"
    :parser-opts    {:env       {}
-                    :resolvers (concat shared-resolvers/all
-                                       server-resolvers/all)}
+                    :resolvers (concat shared/resolvers
+                                       db/resolvers
+                                       authn/resolvers)}
    :schemas        [model/datomic-schema]
    :db-name        "splitpea-dev-db"
    :datomic-config {:server-type   :ion
@@ -22,7 +24,8 @@
 
 (defn handler
   [req]
-  (let [rope-handler (irope/ion-handler config)]
+  (let [rope-handler (-> (irope/ion-handler config)
+                         (authn/middleware))]
     (rope-handler req)))
 
 (def ionized-handler
@@ -40,8 +43,10 @@
        {:request-method :post
         :uri "/api"
         :headers {"accept" "application/edn"
-                  "content-type" "application/edn"}
-        :body (io/input-stream (.getBytes (str [{[:team/slug "red-team"] [{:team/members [:user/email]}]}])))})
+                  "content-type" "application/edn"
+                  "authorization" (str "Token " "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyL2VtYWlsIjoiY2FsdmluIn0.MbD4J-389aG1UuY2xEioX2ujx4uqIr41ai59OR4DSIA")}
+        ;; :body (io/input-stream (.getBytes (str [{`(authn/login! {:login/email "calvin"}) [:login/token]}])))})
+        :body (io/input-stream (.getBytes (str [:user/me])))})
       :body
       slurp
       )

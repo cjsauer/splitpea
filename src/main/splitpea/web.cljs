@@ -6,26 +6,26 @@
             [tightrope.client :as rope]
             [splitpea.model :as model]
             [splitpea.web.root :as root]
-            [splitpea.resolvers :as shared-resolvers]
-            [splitpea.web.resolvers :as web-resolvers]))
+            [splitpea.resolvers :as shared]
+            [splitpea.web.authn :as authn]))
 
 (defn- authz-middleware
   [{:keys [parser]} req]
-  (if-let [token (-> (parser {} [:user/token]) :user/token)]
-    (update req :headers merge {"Authorization" token})
+  (if-let [token (-> (parser {} [:login/token]) :login/token)]
+    (update req :headers merge {"Authorization" (str "Token " token)})
     req))
 
 (def web-schema
   (merge model/datascript-schema
-         {:user/me     {:db/valueType   :db.type/ref}
+         {:user/me     {:db/valueType :db.type/ref}
           :login/form  {:db/valueType :db.type/ref}
           :login/email {}
           }))
 
 (defonce app-ctx (rope/make-framework-context
                   {:schema      web-schema
-                   :parser-opts {:resolvers (concat shared-resolvers/all
-                                                    web-resolvers/all)}
+                   :parser-opts {:resolvers (concat shared/resolvers
+                                                    authn/resolvers)}
                    :remote      {:uri "/api"
                                  :request-middleware authz-middleware}
                    }))

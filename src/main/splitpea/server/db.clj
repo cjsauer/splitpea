@@ -1,5 +1,6 @@
 (ns splitpea.server.db
-  (:require [datomic.client.api :as d]
+  (:require [com.wsscode.pathom.connect :as pc]
+            [datomic.client.api :as d]
             [splitpea.model :as model]))
 
 (defn entity-by
@@ -22,3 +23,10 @@
         model/rules
         user-lookup
         (or pull-expr '[*]))))
+
+(pc/defresolver db-resolver
+  [{:keys [conn]} _]
+  {::pc/output #{::db}}
+  {::db (d/db conn)})
+
+(def resolvers [db-resolver])

@@ -3,9 +3,9 @@
   (:require [com.wsscode.pathom.connect :as pc]))
 
 (pc/defresolver greeting
-  [_ {:user/keys [primary-email]}]
-  {::pc/input  #{:user/primary-email}
+  [_ {:user/keys [email]}]
+  {::pc/input  #{:user/email}
    ::pc/output #{:user/greeting}}
-  {:user/greeting (str "Hello, " primary-email)})
+  {:user/greeting (str "Hello, " email)})
 
-(def all [greeting])
+(def resolvers [greeting])
