@@ -46,7 +46,7 @@
                   "content-type" "application/edn"
                   "authorization" (str "Token " "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyL2VtYWlsIjoiY2FsdmluIn0.MbD4J-389aG1UuY2xEioX2ujx4uqIr41ai59OR4DSIA")}
         ;; :body (io/input-stream (.getBytes (str [{`(authn/login! {:login/email "calvin"}) [:login/token]}])))})
-        :body (io/input-stream (.getBytes (str [:user/me])))})
+        :body (io/input-stream (.getBytes (str [{[:db/id 15256823347019860] [:user/email :user/greeting]}])))})
       :body
       slurp
       )

@@ -15,4 +15,22 @@
   (let [token (.getItem js/localStorage "login/token")]
     {:login/token token}))
 
+;; (pc/defmutation call-some-service
+;;   [{:keys [conn]} _]
+;;   {::pc/output #{::rope/id ;; <-- ephemeral response entity id
+;;                  }}
+;;   (let [id (rope-id)]
+;;     (go
+;;       (let [x  (<! async-call)]
+;;         (transact! conn [{::rope/id id
+;;                           :x x}])))
+;;     {:rope/id id}))
+;;
+;; Now components can mount against this response
+;;
+;; (def *ephemeral
+;;   {:idents        [::rope/id]
+;;    :query         [:x]
+;;    :auto-retract? true})
+
 (def resolvers [store-token! login-token])
