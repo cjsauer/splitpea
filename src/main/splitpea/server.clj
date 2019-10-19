@@ -3,7 +3,7 @@
             [splitpea.model :as model]
             [splitpea.resolvers :as shared]
             [splitpea.server.db :as db]
-            [splitpea.server.authn :as authn]
+            [splitpea.authn.server :as authn]
             [datomic.ion.lambda.api-gateway :as apigw]
             ))
 

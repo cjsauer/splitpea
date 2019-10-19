@@ -1,4 +1,4 @@
-(ns splitpea.server.authn
+(ns splitpea.authn.server
   (:require [com.wsscode.pathom.connect :as pc]
             [splitpea.server.db :as db]
             [buddy.auth.backends :as backends]

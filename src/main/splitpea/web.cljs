@@ -5,9 +5,12 @@
             [datascript.core :as ds]
             [tightrope.client :as rope]
             [splitpea.model :as model]
-            [splitpea.web.root :as root]
             [splitpea.resolvers :as shared]
-            [splitpea.web.authn :as authn]))
+            [splitpea.authn.web :as authn-web]
+            [splitpea.dashboard.web :as dash-web]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Context
 
 (defn- authz-middleware
   [{:keys [parser]} req]
@@ -17,25 +20,38 @@
 
 (def web-schema
   (merge model/datascript-schema
-         {:user/me     {:db/valueType :db.type/ref}
-          :login/form  {:db/valueType :db.type/ref}
-          :login/email {}
-          }))
+         authn-web/schema))
 
 (defonce app-ctx (rope/make-framework-context
                   {:schema      web-schema
                    :parser-opts {:resolvers (concat shared/resolvers
-                                                    authn/resolvers)}
+                                                    authn-web/resolvers)}
                    :remote      {:uri "/api"
                                  :request-middleware authz-middleware}
                    }))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Root
+
+(rum/defc root
+  []
+  [:div
+   (authn-web/authn {:authenticated-view dash-web/user-dashboard})])
+
 (defn ^:dev/after-load mount
   []
   (rum/mount
-   (rope/ctx-provider app-ctx (root/root))
+   (rope/ctx-provider app-ctx (root))
    (.getElementById js/document "app")))
 
 (defn start!
   []
   (mount))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Helpers
+
+(defn datoms
+  []
+  (-> app-ctx :conn ds/db (ds/datoms :eavt)))
