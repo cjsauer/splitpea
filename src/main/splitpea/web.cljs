@@ -27,6 +27,7 @@
                    :parser-opts {:resolvers (concat shared/resolvers
                                                     authn-web/resolvers)}
                    :remote      {:uri "/api"
+                                 :ws-uri "wss://7ps9rxk22d.execute-api.us-east-1.amazonaws.com/dev"
                                  :request-middleware authz-middleware}
                    }))
 

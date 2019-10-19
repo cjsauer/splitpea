@@ -4,10 +4,13 @@
             [tightrope.dev :as rope-dev]))
 
 (defn deploy
-  []
-  (rope-dev/ion-release {:region        "us-east-1"
-                         :creds-profile "sandbox"
-                         :group         "splitpea-dev-compute"}))
+  [& [opts]]
+  (rope-dev/ion-release
+   (merge
+    opts
+    {:region        "us-east-1"
+     :creds-profile "sandbox"
+     :group         "splitpea-dev-compute"})))
 
 (defn apigw-request
   [payload]
