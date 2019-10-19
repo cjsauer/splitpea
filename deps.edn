@@ -1,27 +1,22 @@
 {:paths ["src/main" "resources"]
 
  :mvn/repos {"datomic-cloud" {:url "s3://datomic-releases-1fc2183a/maven/releases"}}
- :deps      {org.clojure/clojure        {:mvn/version "1.10.0"}
-             org.clojure/core.async     {:mvn/version "0.4.500"}
-             org.clojure/spec.alpha     {:mvn/version "0.2.176"}
-             com.datomic/ion            {:mvn/version "0.9.35"}
-             rum                        {:mvn/version "0.11.3"}
-             datascript                 {:mvn/version "0.18.4"}
-             clj-http                   {:mvn/version "3.10.0"}
-             cljs-http                  {:mvn/version "0.1.46"}
-             cheshire                   {:mvn/version "5.9.0"}
-             compojure                  {:mvn/version "1.6.1"}
-             com.wsscode/pathom         {:mvn/version "2.2.25"}
-             com.wsscode/pathom-datomic {:git/url "https://github.com/cjsauer/pathom-datomic.git"
-                                         :sha     "23e23ac8ae96dba5461cd020879d896c355f65d3"}
-             cjsauer/tightrope          {:git/url "https://github.com/cjsauer/tightrope"
-                                         :sha     "f0b9c0f293a8bf9601946a20ef17d039f21b4719"}
-             buddy/buddy-auth           {:mvn/version "2.2.0"}}
+ :deps      {org.clojure/clojure    {:mvn/version "1.10.0"}
+             org.clojure/core.async {:mvn/version "0.4.500"}
+             org.clojure/spec.alpha {:mvn/version "0.2.176"}
+             com.datomic/ion        {:mvn/version "0.9.35"}
+             rum                    {:mvn/version "0.11.3"}
+             datascript             {:mvn/version "0.18.4"}
+             com.wsscode/pathom     {:mvn/version "2.2.25"}
+             cjsauer/tightrope      {:git/url "https://github.com/cjsauer/tightrope"
+                                     :sha     "fbddce0f7509532a64a45ee9baa4377337b4da15"}
+             buddy/buddy-auth       {:mvn/version "2.2.0"}}
  :aliases
  {:cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.8.59"}}}
   :dev  {:extra-paths ["src/dev" "src/test"]
          :extra-deps  {cjsauer/tightrope        {:local/root "../tightrope"}
                        com.datomic/client-cloud {:mvn/version "0.8.78"}
                        com.datomic/ion-dev      {:mvn/version "0.9.234"}
+                       clj-http                 {:mvn/version "3.10.0"}
                        }}
   }}

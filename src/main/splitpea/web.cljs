@@ -19,6 +19,7 @@
   (merge model/datascript-schema
          {:user/me     {:db/valueType :db.type/ref}
           :login/form  {:db/valueType :db.type/ref}
+          :login/email {}
           }))
 
 (defonce app-ctx (rope/make-framework-context
