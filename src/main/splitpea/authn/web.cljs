@@ -65,7 +65,6 @@
    :mount-tx {:db/ident :me}
    :query    [:login/token
               {:user/me [:user/email]}
-              ;; :user/me
               :ui/freshening?
               :ui/mutating?]
    :freshen? true
@@ -76,13 +75,14 @@
   [{:keys       [authenticated-view]
     ::rope/keys [data]}]
   (let [{:login/keys [token]
-         :ui/keys    [freshening?]} data]
+         :ui/keys    [freshening?]
+         :user/keys  [me]} data]
     (if freshening?
       [:p "Loading..."]
       [:div
        [:pre (str "AUTHN " data)]
        (if token
-         (authenticated-view (:user/me data))
+         (authenticated-view me)
          (login-form {:target *authn}))])))
 
 

@@ -3,20 +3,21 @@
             [tightrope.client :as rope]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; User Dashboard
+;; Greeting
 
-;; Example of pure component
 (rum/defc friendly-greeting
   < rum/static
   [{:keys [greeting]}]
   [:div
    [:h1 {:style {:font-size "2em"}} greeting]])
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; User dashbord
+
 (def *user-dashboard
   {:idents   [:user/email]
    :query    [:user/email :user/greeting]
    })
-
 
 (rum/defc user-dashboard
   < (rope/ds-mixin *user-dashboard)
