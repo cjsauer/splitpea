@@ -1,7 +1,9 @@
 (ns user
   (:require [datomic.ion.dev :as ion-dev]
             [clj-http.client :as http]
-            [tightrope.dev :as rope-dev]))
+            [tightrope.dev :as rope-dev]
+            [cheshire.core :as json]
+            [clojure.edn :as edn]))
 
 (defn deploy
   [& [opts]]

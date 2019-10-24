@@ -37,7 +37,8 @@
   (require '[clojure.java.io :as io]
            '[clojure.core.async :as a]
            '[datomic.client.api :as d]
-           '[splitpea.server.db :as db])
+           '[splitpea.server.db :as db]
+           '[tightrope.server.ions.remote :as iremote])
 
   (-> (handler
        {:request-method :post
@@ -79,8 +80,38 @@
 
   (db/collaborators (irope/get-db config) [:user/email "calvin"] [:user/email])
 
-
+  (irope/subscribe! (irope/get-conn config) "c1" [:user/email "calvin"])
 
   (d/delete-database (irope/get-client (:datomic-config config)) {:db-name "splitpea-dev-db"})
+
+  (iremote/unsubscribe-tx (irope/get-db config) "c1" [[:user/email "calvin"]])
+
+  (d/transact (irope/get-conn config) {:tx-data [{:db/ident :user/age
+                                                  :db/valueType :db.type/long
+                                                  :db/cardinality :db.cardinality/one}]})
+
+  (iremote/subscribe! (irope/get-conn config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
+
+  (iremote/unsubscribe! (irope/get-conn config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
+
+  (iremote/multiplex-datoms (irope/get-db config)
+                            [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
+                             [15256823347019860 85 28 13194139533332 true]
+                             [39424088925536341 85 26 13194139533332 true]])
+
+  (iremote/eid->lookups (irope/get-db config) 39424088925536341)
+
+  (iremote/broadcast-datoms! (irope/get-db config)
+                             [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
+                              [15256823347019860 85 28 13194139533332 true]
+                              [39424088925536341 85 26 13194139533332 true]])
+
+  (let [datoms [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
+                [15256823347019860 85 28 13194139533332 true]
+                [39424088925536341 85 26 13194139533332 true]]]
+    (iremote/make-lookup-table (irope/get-db config) datoms))
+
+
+  (iremote/subscribe! (irope/get-conn config) "CFoeleW3oAMCFJQ=" [[:user/email "calvin"]])
 
   )
