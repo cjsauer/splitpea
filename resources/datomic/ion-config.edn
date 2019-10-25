@@ -1,12 +1,12 @@
 {:allow [splitpea.model/team-dag?]
 
  :lambdas  {:tightrope-handler       {:fn          splitpea.server/ionized-handler
-                                      :description "Tightrope endpoint for splitpea"}
-            :tightrope-ws-connect    {:fn          tightrope.server.ions/on-connect
+                                      :description "Tightrope HTTP endpoint for splitpea"}
+            :tightrope-ws-connect    {:fn          splitpea.server/ws-on-connect
                                       :description "API Gateway WebSocket connect handler for splitpea"}
-            :tightrope-ws-disconnect {:fn          tightrope.server.ions/on-disconnect
+            :tightrope-ws-disconnect {:fn          splitpea.server/ws-on-disconnect
                                       :description "API Gateway WebSocket disconnect handler for splitpea"}
-            :tightrope-ws-message    {:fn          tightrope.server.ions/on-message
+            :tightrope-ws-message    {:fn          splitpea.server/ws-on-message
                                       :description "API Gateway WebSocket message handler for splitpea"}
             }
  :app-name "splitpea-dev"}

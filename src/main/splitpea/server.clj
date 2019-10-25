@@ -1,14 +1,15 @@
 (ns splitpea.server
-  (:require [tightrope.server.ions :as irope]
+  (:require [datomic.ion.lambda.api-gateway :as apigw]
+            [splitpea.authn.server :as authn]
             [splitpea.model :as model]
             [splitpea.resolvers :as shared]
             [splitpea.server.db :as db]
-            [splitpea.authn.server :as authn]
-            [datomic.ion.lambda.api-gateway :as apigw]
-            ))
+            [tightrope.server.ions :as irope]
+            [tightrope.server.ions.remote :as iremote]))
 
 (def config
   {:path           "/api"
+   :remote         {:ws-uri "https://7ps9rxk22d.execute-api.us-east-1.amazonaws.com/dev"}
    :parser-opts    {:env       {}
                     :resolvers (concat shared/resolvers
                                        db/resolvers
@@ -31,14 +32,23 @@
 (def ionized-handler
   (apigw/ionize handler))
 
+(def ws-on-connect (iremote/make-on-connect config))
+(def ws-on-disconnect (iremote/make-on-disconnect config))
+(def ws-on-message (iremote/make-on-message config))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; REPL testing
 
 (comment
 
   (require '[clojure.java.io :as io]
            '[clojure.core.async :as a]
            '[datomic.client.api :as d]
-           '[splitpea.server.db :as db]
-           '[tightrope.server.ions.remote :as iremote])
+           '[splitpea.server.db :as db])
 
   (-> (handler
        {:request-method :post
@@ -69,6 +79,9 @@
 
   (load-sample-data)
 
+  (d/delete-database (irope/get-client (:datomic-config config)) {:db-name "splitpea-dev-db"})
+
+
   (db/entity-by (irope/get-db config) :user/email "calvin")
 
   (db/entity-by (irope/get-db config) :team/slug "red-team")
@@ -80,11 +93,12 @@
 
   (db/collaborators (irope/get-db config) [:user/email "calvin"] [:user/email])
 
-  (irope/subscribe! (irope/get-conn config) "c1" [:user/email "calvin"])
 
-  (d/delete-database (irope/get-client (:datomic-config config)) {:db-name "splitpea-dev-db"})
 
-  (iremote/unsubscribe-tx (irope/get-db config) "c1" [[:user/email "calvin"]])
+
+  (iremote/subscribe! (irope/get-conn config) "c1" [[:user/email "calvin"]])
+
+  (iremote/unsubscribe-tx (irope/get-db config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
 
   (d/transact (irope/get-conn config) {:tx-data [{:db/ident :user/age
                                                   :db/valueType :db.type/long
