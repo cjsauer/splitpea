@@ -4,16 +4,17 @@
             [splitpea.model :as model]
             [splitpea.resolvers :as shared]
             [splitpea.server.db :as db]
-            [tightrope.server.ions :as irope]
-            [tightrope.server.ions.remote :as iremote]))
+            [tightrope.server.ions :as irope]))
 
 (def config
   {:path           "/api"
-   :remote         {:ws-uri "https://7ps9rxk22d.execute-api.us-east-1.amazonaws.com/dev"}
+   :remote         {:ws-uri          "https://7ps9rxk22d.execute-api.us-east-1.amazonaws.com/dev"
+                    :request->lookup authn/request->lookup}
    :parser-opts    {:env       {}
                     :resolvers (concat shared/resolvers
                                        db/resolvers
                                        authn/resolvers)}
+   :authz          model/rules
    :schemas        [model/datomic-schema]
    :db-name        "splitpea-dev-db"
    :datomic-config {:server-type   :ion
@@ -32,10 +33,21 @@
 (def ionized-handler
   (apigw/ionize handler))
 
-(def ws-on-connect (iremote/make-on-connect config))
-(def ws-on-disconnect (iremote/make-on-disconnect config))
-(def ws-on-message (iremote/make-on-message config))
+(defn on-connect
+  [input]
+  (irope/on-connect config input))
 
+(defn on-disconnect
+  [input]
+  (irope/on-disconnect config input))
+
+(defn on-message
+  [input]
+  (irope/on-message config input))
+
+(def ws-on-connect (apigw/ionize on-connect))
+(def ws-on-disconnect (apigw/ionize on-disconnect))
+(def ws-on-message (apigw/ionize on-message))
 
 
 
@@ -74,7 +86,7 @@
                     :team/slug    "red-team"
                     :team/members [{:user/email "derek"}]
                     }]]
-      (d/transact (irope/get-conn config) {:tx-data tx-data})
+      (irope/xact! config tx-data)
       ))
 
   (load-sample-data)
@@ -82,50 +94,33 @@
   (d/delete-database (irope/get-client (:datomic-config config)) {:db-name "splitpea-dev-db"})
 
 
-  (db/entity-by (irope/get-db config) :user/email "calvin")
+  (db/entity-by (irope/get-db config) :user/email "calvin" '[*])
 
-  (db/entity-by (irope/get-db config) :team/slug "red-team")
+  (db/entity-by (irope/get-db config) :team/slug "red-team" '[*])
 
   (db/entity-by (irope/get-db config) :team/slug "blue-team" '[* {:team/members [*]}])
 
-  (db/xact (irope/get-conn config) [[:db/retract [:team/slug "red-team"]
-                                     :team/members [:user/email "calvin"]]])
+  (irope/xact! config [[:db/retract [:team/slug "red-team"]
+                        :team/members [:user/email "calvin"]]])
+
+  (d/pull (irope/get-db config) '[*] 77)
+
+  (irope/xact! config [{:team/slug "red-team"
+                        :team/members [[:user/email "calvin"]]}])
 
   (db/collaborators (irope/get-db config) [:user/email "calvin"] [:user/email])
 
 
 
+  (irope/eid->lookups (irope/get-db config) 39424088925536341)
 
-  (iremote/subscribe! (irope/get-conn config) "c1" [[:user/email "calvin"]])
+  (irope/xact! config [{:user/email "jerry"}])
 
-  (iremote/unsubscribe-tx (irope/get-db config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
+  (irope/all-conn-ids (irope/get-db config))
 
-  (d/transact (irope/get-conn config) {:tx-data [{:db/ident :user/age
-                                                  :db/valueType :db.type/long
-                                                  :db/cardinality :db.cardinality/one}]})
-
-  (iremote/subscribe! (irope/get-conn config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
-
-  (iremote/unsubscribe! (irope/get-conn config) "c1" [[:user/email "calvin"] [:user/email "brittany"]])
-
-  (iremote/multiplex-datoms (irope/get-db config)
-                            [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
-                             [15256823347019860 85 28 13194139533332 true]
-                             [39424088925536341 85 26 13194139533332 true]])
-
-  (iremote/eid->lookups (irope/get-db config) 39424088925536341)
-
-  (iremote/broadcast-datoms! (irope/get-db config)
-                             [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
-                              [15256823347019860 85 28 13194139533332 true]
-                              [39424088925536341 85 26 13194139533332 true]])
-
-  (let [datoms [[13194139533332 50 #inst "2019-10-23T02:23:04.997-00:00" 13194139533332 true]
-                [15256823347019860 85 28 13194139533332 true]
-                [39424088925536341 85 26 13194139533332 true]]]
-    (iremote/make-lookup-table (irope/get-db config) datoms))
-
-
-  (iremote/subscribe! (irope/get-conn config) "CFoeleW3oAMCFJQ=" [[:user/email "calvin"]])
+  (d/q '[:find (pull ?cid [*])
+         :in $
+         :where [_ :aws.apigw.ws.conn/id ?cid]]
+       (irope/get-db config))
 
   )

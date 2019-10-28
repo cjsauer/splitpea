@@ -9,7 +9,7 @@
              datascript             {:mvn/version "0.18.7"}
              com.wsscode/pathom     {:mvn/version "2.2.25"}
              cjsauer/tightrope      {:git/url "https://github.com/cjsauer/tightrope"
-                                     :sha     "7d8f4526c275463c7220d56c6209578f43be0876"}
+                                     :sha     "882612a77ad145a9049b1c49fb5fc04a76d7c0b0"}
              buddy/buddy-auth       {:mvn/version "2.2.0"}}
  :aliases
  {:cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.8.59"}}}

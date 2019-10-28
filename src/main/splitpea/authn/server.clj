@@ -9,6 +9,10 @@
   []
   "secret")
 
+(defn request->lookup
+  [req]
+  (-> req :identity seq first))
+
 (defn middleware
   [handler]
   (let [secret  (get-secret)

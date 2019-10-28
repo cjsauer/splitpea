@@ -107,6 +107,17 @@
      (all-team-users ?team ?collaborator)
      [(not= ?me ?collaborator)]]
 
+    ;; Authorization
+
+    [(authorize [?datom] ?user)
+     ;; user can see datoms about themselves
+     [(first ?datom) ?user]]
+
+    [(authorize [?datom] ?user)
+     ;; user can see datoms about their team
+     [(first ?datom) ?team]
+     (all-team-users ?team ?user)]
+
     ;; "Top level" ideas
     ;;   - Ones in which the subject is not itself another idea
     ;;   - Can be constrained to a specific team
