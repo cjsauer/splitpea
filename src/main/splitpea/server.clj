@@ -9,12 +9,12 @@
 (def config
   {:path           "/api"
    :remote         {:ws-uri          "https://7ps9rxk22d.execute-api.us-east-1.amazonaws.com/dev"
-                    :request->lookup authn/request->lookup}
+                    :request->lookup authn/request->lookup
+                    :authz-rules     model/rules}
    :parser-opts    {:env       {}
                     :resolvers (concat shared/resolvers
                                        db/resolvers
                                        authn/resolvers)}
-   :authz          model/rules
    :schemas        [model/datomic-schema]
    :db-name        "splitpea-dev-db"
    :datomic-config {:server-type   :ion
@@ -118,9 +118,9 @@
 
   (irope/all-conn-ids (irope/get-db config))
 
-  (d/q '[:find (pull ?cid [*])
+  (d/q '[:find (pull ?e [*])
          :in $
-         :where [_ :aws.apigw.ws.conn/id ?cid]]
+         :where [?e :aws.apigw.ws.conn/id ?cid]]
        (irope/get-db config))
 
   )
